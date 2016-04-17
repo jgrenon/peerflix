@@ -157,7 +157,12 @@ var createServer = function (e, opts) {
     if (!range) {
       response.setHeader('Content-Length', file.length)
       if (request.method === 'HEAD') return response.end()
-      pump(file.createReadStream(), response)
+
+      var stream = file.createReadStream();
+      if(opts.transcode) {
+        stream = options.transcode(stream)
+      }
+      pump(stream, response);
       return
     }
 
@@ -165,7 +170,11 @@ var createServer = function (e, opts) {
     response.setHeader('Content-Length', range.end - range.start + 1)
     response.setHeader('Content-Range', 'bytes ' + range.start + '-' + range.end + '/' + file.length)
     if (request.method === 'HEAD') return response.end()
-    pump(file.createReadStream(range), response)
+    var stream = file.createReadStream(range);
+    if(opts.transcode) {
+      stream = options.transcode(stream)
+    }
+    pump(stream, response);
   })
 
   server.on('connection', function (socket) {
